@@ -56,6 +56,26 @@ service cloud.firestore {
       allow delete: if false; // soft-delete only — set deletedAt field instead
     }
 
+        // destinations/{destinationId}
+    // Seeded reference data. Any signed-in user can read it.
+    // Nobody can write from the browser: saveCount is only changed by
+    // Server Actions using the Admin SDK, which bypasses these rules.
+    match /destinations/{destinationId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    // savedDestinations/{savedId}   (savedId = uid_destinationId)
+    // Users can only read their OWN saves that haven't been removed.
+    // All writes (save, remove, edit tags) go through Server Actions,
+    // so direct browser writes are always denied.
+    match /savedDestinations/{savedId} {
+      allow read: if isOwner(resource.data.uid)
+        && resource.data.deletedAt == null;
+      allow write: if false;
+    }
+    
+
     // Add new collection rules above this comment using the /firebase-collection skill.
 
     // ── Default deny ───────────────────────────────────────────────────────
