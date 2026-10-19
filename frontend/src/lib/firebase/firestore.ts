@@ -2,7 +2,6 @@ import { collection, doc, type CollectionReference, type DocumentData } from 'fi
 import { getClientDb } from './client'
 import type { Destination, SavedDestination, UserProfile } from '@/types/firestore'
 
-
 /**
  * Creates a typed Firestore collection reference.
  * Use this factory to add new collections — see docs/FIRESTORE-SCHEMA.md
@@ -32,4 +31,3 @@ export function getDestinationsCollection() {
 export function getSavedDestinationsCollection() {
   return typedCollection<SavedDestination>('savedDestinations')
 }
-
