@@ -5,9 +5,10 @@ import { FieldValue } from 'firebase-admin/firestore'
 import { adminDb } from '@/lib/firebase/admin'
 import { requireAuth } from '@/actions/auth.actions'
 import type { ActionResult } from '@/types'
+import { validateTags } from '../tags'
 
 /**
- * Save / remove a destination on the signed-in user's shortlist.
+ * Save / remove / tag a destination on the signed-in user's shortlist.
  *
  * These run on the SERVER (Admin SDK), so Firestore rules don't apply.
  * That is why every check the rules would normally do happens here:
@@ -114,5 +115,35 @@ export async function removeDestination(destinationId: string): Promise<ActionRe
   } catch (err) {
     console.error('removeDestination failed', err)
     return { success: false, error: 'Could not remove. Please try again.' }
+  }
+}
+
+export async function updateTags(destinationId: string, tags: string[]): Promise<ActionResult> {
+  const { uid } = await requireAuth()
+
+  const parsed = destinationIdSchema.safeParse(destinationId)
+  if (!parsed.success) return { success: false, error: 'Invalid destination.' }
+
+  // Same rules the browser used — checked again here because the browser can be bypassed (AC-7)
+  const checked = validateTags(tags)
+  if (!checked.ok) return { success: false, error: checked.error }
+
+  const savedRef = adminDb.collection('savedDestinations').doc(savedDocId(uid, parsed.data))
+
+  try {
+    await adminDb.runTransaction(async (tx) => {
+      const savedSnap = await tx.get(savedRef)
+      // Only your own, not-removed save can be tagged
+      if (!savedSnap.exists || savedSnap.data()?.deletedAt != null) throw new Error('NOT_SAVED')
+
+      tx.update(savedRef, { tags: checked.tags, updatedAt: FieldValue.serverTimestamp() })
+    })
+    return { success: true }
+  } catch (err) {
+    if (err instanceof Error && err.message === 'NOT_SAVED') {
+      return { success: false, error: 'This destination is no longer on your shortlist.' }
+    }
+    console.error('updateTags failed', err)
+    return { success: false, error: 'Could not update tags. Please try again.' }
   }
 }
