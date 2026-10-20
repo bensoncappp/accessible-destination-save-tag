@@ -15,7 +15,7 @@ export function DestinationCard({
   isPending,
   onSaveToggle,
 }: DestinationCardProps) {
-  const { name, country } = destination
+  const { name } = destination
 
   // Button text follows the wireframe: Save → Saving… → Saved ✓
   let buttonText = isSaved ? 'Saved ✓' : 'Save'
@@ -23,10 +23,7 @@ export function DestinationCard({
 
   return (
     <article className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <div>
-        <h2 className="text-lg font-semibold">{name}</h2>
-        <p className="text-sm text-zinc-500">{country}</p>
-      </div>
+      <h2 className="text-lg font-semibold">{name}</h2>
 
       <DestinationDetails destination={destination} />
 
