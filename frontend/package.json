@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "seed:destinations": "node --env-file=.env.local scripts/seed-destinations.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
