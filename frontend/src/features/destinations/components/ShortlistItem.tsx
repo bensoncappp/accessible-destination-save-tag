@@ -71,7 +71,8 @@ export function ShortlistItem({ item, destination }: ShortlistItemProps) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">{item.destinationName}</h2>
-          <p className="text-sm text-zinc-500">{item.country}</p>
+          {/* Location comes from the full destination below; fall back to the saved copy */}
+          {!destination && <p className="text-sm text-zinc-500">{item.country}</p>}
         </div>
         <button
           type="button"
