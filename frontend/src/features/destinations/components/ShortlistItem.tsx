@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import type { Destination, SavedDestination } from '@/types/firestore'
 import { addTag, MAX_TAGS } from '../tags'
 import { removeDestination, updateTags } from '../actions/destinations.actions'
+import { callAction } from '../callAction'
 import { DestinationDetails } from './DestinationDetails'
 
 interface ShortlistItemProps {
@@ -26,7 +27,7 @@ export function ShortlistItem({ item, destination }: ShortlistItemProps) {
   // shortlist then shows the saved tags, so there's no local copy to keep in sync.
   async function saveTags(nextTags: string[]): Promise<boolean> {
     setBusy(true)
-    const result = await updateTags(item.destinationId, nextTags)
+    const result = await callAction(() => updateTags(item.destinationId, nextTags))
     setBusy(false)
     if (!result.success) {
       toast.error(result.error ?? 'Could not update tags. Please try again.')
@@ -52,7 +53,7 @@ export function ShortlistItem({ item, destination }: ShortlistItemProps) {
 
   async function handleRemoveItem() {
     setBusy(true)
-    const result = await removeDestination(item.destinationId)
+    const result = await callAction(() => removeDestination(item.destinationId))
     if (result.success) {
       toast.success(`Removed ${item.destinationName}`)
       // The item disappears by itself: the live query only shows deletedAt == null

@@ -11,6 +11,7 @@ import { useCollection } from '@/hooks/useFirestore'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { filterDestinations } from '../filters'
+import { callAction } from '../callAction'
 import { removeDestination, saveDestination } from '../actions/destinations.actions'
 import { FeatureFilter } from './FeatureFilter'
 import { DestinationCard } from './DestinationCard'
@@ -69,9 +70,9 @@ function DestinationsView({ uid }: { uid: string }) {
   async function handleSaveToggle(destination: Destination) {
     setPendingId(destination.id)
     const isSaved = savedIds.has(destination.id)
-    const result = isSaved
-      ? await removeDestination(destination.id)
-      : await saveDestination(destination.id)
+    const result = await callAction(() =>
+      isSaved ? removeDestination(destination.id) : saveDestination(destination.id)
+    )
     setPendingId(null)
 
     if (result.success) {
