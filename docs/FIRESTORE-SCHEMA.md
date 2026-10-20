@@ -54,18 +54,22 @@ This enables **lazy migration** — when a document is read, check `_schemaVersi
 **Path:** `/destinations/{destinationId}`
 **Access:** Read by any signed-in user. No client writes; `saveCount` is updated only by Server Actions (Admin SDK).
 
-| Field                   | Type                     | Required | Description                                                                                                                  |
-| ----------------------- | ------------------------ | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `name`                  | `string`                 | Yes      | Destination name                                                                                                             |
-| `country`               | `string`                 | Yes      | Country                                                                                                                      |
-| `accessibilityFeatures` | `AccessibilityFeature[]` | Yes      | From a fixed list: `step-free-transport`, `accessible-stays`, `wheelchair-attractions`, `accessible-toilets`, `quiet-spaces` |
-| `accessibilityNotes`    | `string`                 | Yes      | Short plain-language accessibility summary                                                                                   |
-| `saveCount`             | `number`                 | Yes      | How many users currently have it saved; never below 0                                                                        |
-| `createdAt`             | `Timestamp`              | Yes      | When the document was created                                                                                                |
-| `updatedAt`             | `Timestamp`              | Yes      | When the document was last updated                                                                                           |
-| `_schemaVersion`        | `1`                      | Yes      | Schema version for lazy migration                                                                                            |
+| Field                   | Type                                             | Required | Description                                                                                                                  |
+| ----------------------- | ------------------------------------------------ | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `name`                  | `string`                                         | Yes      | Destination name                                                                                                             |
+| `region`                | `string`                                         | Yes      | State / province / region, e.g. `Victoria`                                                                                   |
+| `country`               | `string`                                         | Yes      | Country                                                                                                                      |
+| `airportCode`           | `string`                                         | Yes      | IATA code of the main arrival airport, e.g. `MEL`                                                                            |
+| `airportName`           | `string`                                         | Yes      | Name of that airport                                                                                                         |
+| `accessibilityFeatures` | `AccessibilityFeature[]`                         | Yes      | From a fixed list: `step-free-transport`, `accessible-stays`, `wheelchair-attractions`, `accessible-toilets`, `quiet-spaces` |
+| `featureDetails`        | `map<AccessibilityFeature, { text, sourceUrl }>` | Yes      | One researched detail per listed feature, with the source it came from (same keys as `accessibilityFeatures`)                |
+| `accessibilityNotes`    | `string`                                         | Yes      | General caveat or tip for the destination                                                                                    |
+| `saveCount`             | `number`                                         | Yes      | How many users currently have it saved; never below 0                                                                        |
+| `createdAt`             | `Timestamp`                                      | Yes      | When the document was created                                                                                                |
+| `updatedAt`             | `Timestamp`                                      | Yes      | When the document was last updated                                                                                           |
+| `_schemaVersion`        | `2`                                              | Yes      | Schema version (2 added `region`, `airportCode`, `airportName`, `featureDetails`)                                            |
 
-**Creation:** Seeded by `scripts/seed-destinations.mjs` (sample data).
+**Creation:** Seeded by `frontend/scripts/seed-destinations.mjs`. Feature details were researched in Oct 2026 and each links to its source; a feature is only listed when a source supports it.
 
 ---
 

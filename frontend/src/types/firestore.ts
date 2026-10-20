@@ -33,16 +33,27 @@ export type AccessibilityFeature =
   | 'quiet-spaces'
 
 /** destinations/{destinationId} : seeded data, read-only for users. */
+/** What one accessibility feature looks like at a destination, with where that fact came from. */
+export interface FeatureDetail {
+  text: string
+  sourceUrl: string
+}
+
 export interface Destination {
   id: string
   name: string
+  region: string // e.g. 'Victoria' — more precise than country alone
   country: string
+  airportCode: string // IATA code of the main arrival airport, e.g. 'MEL'
+  airportName: string
   accessibilityFeatures: AccessibilityFeature[]
+  // One researched detail per feature in accessibilityFeatures (same keys)
+  featureDetails: Partial<Record<AccessibilityFeature, FeatureDetail>>
   accessibilityNotes: string
   saveCount: number // changed only by server code (Server Actions)
   createdAt: Timestamp
   updatedAt: Timestamp
-  _schemaVersion: 1
+  _schemaVersion: 2 // 2 = added region, airport and featureDetails
 }
 
 /** savedDestinations/{uid}_{destinationId} : one per user per destination. */

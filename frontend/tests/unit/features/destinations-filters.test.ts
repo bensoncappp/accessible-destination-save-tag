@@ -8,13 +8,17 @@ function dest(name: string, accessibilityFeatures: AccessibilityFeature[]): Dest
   return {
     id: name.toLowerCase(),
     name,
+    region: 'Test Region',
     country: 'Testland',
+    airportCode: 'TST',
+    airportName: 'Test Airport',
     accessibilityFeatures,
+    featureDetails: {},
     accessibilityNotes: '',
     saveCount: 0,
     createdAt: {} as Timestamp,
     updatedAt: {} as Timestamp,
-    _schemaVersion: 1,
+    _schemaVersion: 2,
   }
 }
 
