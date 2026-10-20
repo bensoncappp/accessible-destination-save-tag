@@ -1,33 +1,86 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { where } from 'firebase/firestore'
 import { MapPin } from 'lucide-react'
-import type { AccessibilityFeature } from '@/types/firestore'
-import { getDestinationsCollection } from '@/lib/firebase/firestore'
+import { toast } from 'sonner'
+import type { AccessibilityFeature, Destination } from '@/types/firestore'
+import { getDestinationsCollection, getSavedDestinationsCollection } from '@/lib/firebase/firestore'
+import { useAuth } from '@/hooks/useAuth'
 import { useCollection } from '@/hooks/useFirestore'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { filterDestinations } from '../filters'
+import { removeDestination, saveDestination } from '../actions/destinations.actions'
 import { FeatureFilter } from './FeatureFilter'
 import { DestinationCard } from './DestinationCard'
 
 /**
- * Screen 1 body. Reads `destinations` live with the client SDK
- * (security rules: any signed-in user may read) and filters in the browser.
+ * Screen 1 body. Waits until we know who is signed in, then shows the list.
  */
 export function DestinationsBrowser() {
-  // useMemo: create the collection reference ONCE. useCollection re-subscribes
-  // whenever this reference changes, so a new one every render would loop.
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-16">
+        <LoadingSpinner />
+      </div>
+    )
+  }
+
+  if (!user) {
+    return <p className="text-sm text-zinc-500">Please sign in again to see destinations.</p>
+  }
+
+  // key={uid}: if a different user signs in, React starts this component fresh
+  return <DestinationsView key={user.uid} uid={user.uid} />
+}
+
+function DestinationsView({ uid }: { uid: string }) {
+  // Read 1: all destinations (rule: any signed-in user may read).
+  // useMemo: create each collection reference ONCE. useCollection re-subscribes
+  // whenever its reference changes, so a new one every render would loop.
   const destinationsRef = useMemo(() => getDestinationsCollection(), [])
   const { data, loading, error } = useCollection(destinationsRef)
 
+  // Read 2: MY saves that aren't removed. The where() clauses repeat the
+  // security rule (own uid, deletedAt == null) — rules are not filters, so a
+  // query that could return someone else's docs would be denied outright.
+  const savedRef = useMemo(() => getSavedDestinationsCollection(), [])
+  const { data: mySaves } = useCollection(
+    savedRef,
+    where('uid', '==', uid),
+    where('deletedAt', '==', null)
+  )
+  const savedIds = new Set(mySaves.map((s) => s.destinationId))
+
   const [selected, setSelected] = useState<AccessibilityFeature[]>([])
+  const [pendingId, setPendingId] = useState<string | null>(null)
 
   const toggle = (feature: AccessibilityFeature) =>
     setSelected((current) =>
       current.includes(feature) ? current.filter((f) => f !== feature) : [...current, feature]
     )
   const clear = () => setSelected([])
+
+  // Save or remove → Server Action → Firestore. The live listeners above then
+  // pick up the new saved doc and saveCount by themselves; no manual refresh.
+  async function handleSaveToggle(destination: Destination) {
+    setPendingId(destination.id)
+    const isSaved = savedIds.has(destination.id)
+    const result = isSaved
+      ? await removeDestination(destination.id)
+      : await saveDestination(destination.id)
+    setPendingId(null)
+
+    if (result.success) {
+      toast.success(isSaved ? `Removed ${destination.name}` : `Saved ${destination.name}`)
+    } else {
+      // 1E Save failed
+      toast.error(result.error ?? 'Something went wrong. Please try again.')
+    }
+  }
 
   const visible = filterDestinations(data, selected)
 
@@ -86,7 +139,13 @@ export function DestinationsBrowser() {
         // 1B Success
         <div className="grid gap-4 md:grid-cols-2">
           {visible.map((destination) => (
-            <DestinationCard key={destination.id} destination={destination} />
+            <DestinationCard
+              key={destination.id}
+              destination={destination}
+              isSaved={savedIds.has(destination.id)}
+              isPending={pendingId === destination.id}
+              onSaveToggle={() => handleSaveToggle(destination)}
+            />
           ))}
         </div>
       )}
