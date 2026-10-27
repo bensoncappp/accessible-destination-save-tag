@@ -92,3 +92,48 @@ This enables **lazy migration** — when a document is read, check `_schemaVersi
 
 **Document ID:** `{uid}_{destinationId}`, so each user can save a destination only once (prevents duplicates).
 **Deletion:** Soft delete only; re-saving a removed destination restores it.
+
+
+
+## Entity relationship diagram
+
+```mermaid
+erDiagram
+    users ||--o{ savedDestinations : "saves"
+    destinations ||--o{ savedDestinations : "is saved as"
+
+    users {
+        string uid PK "Firebase Auth UID (document ID)"
+        string email
+        string role "user or admin"
+    }
+
+    destinations {
+        string id PK "slug, e.g. melbourne-au (document ID)"
+        string name
+        string region "e.g. Victoria"
+        string country
+        string airportCode "IATA code, e.g. MEL"
+        string airportName
+        string[] accessibilityFeatures "fixed list of 5"
+        map featureDetails "feature to text + sourceUrl"
+        string accessibilityNotes
+        number saveCount "server-only, never below 0"
+        timestamp createdAt
+        timestamp updatedAt
+        number schemaVersion "_schemaVersion = 2"
+    }
+
+    savedDestinations {
+        string id PK "uid_destinationId (document ID)"
+        string uid FK "owner, references users"
+        string destinationId FK "references destinations"
+        string destinationName "copied at save time"
+        string country "copied at save time"
+        string[] tags "max 5, lowercase, 1-20 chars"
+        timestamp createdAt
+        timestamp updatedAt
+        timestamp deletedAt "null = active, set = removed"
+        number schemaVersion "_schemaVersion = 1"
+    }
+```
